@@ -3,8 +3,7 @@ import datetime
 import httpx
 from adrf.decorators import api_view
 
-from adrf.views import APIView
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse
 
 from rich.pretty import pretty_repr
 
