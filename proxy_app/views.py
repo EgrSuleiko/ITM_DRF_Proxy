@@ -4,6 +4,8 @@ import httpx
 from adrf.decorators import api_view
 
 from django.http import HttpResponse
+from rest_framework.decorators import permission_classes
+from rest_framework.permissions import IsAuthenticated
 
 from rich.pretty import pretty_repr
 
@@ -13,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 @api_view(['GET', 'POST', 'DELETE'])
+@permission_classes([IsAuthenticated])
 async def proxy_request(request, *args, **kwargs):
     service_url = f'{settings.FASTAPI_URL}{request.get_full_path()}'
 
@@ -33,10 +36,6 @@ async def proxy_request(request, *args, **kwargs):
         status=response.status_code,
         content_type=response.headers.get('Content-type'),
     )
-
-    for header, value in response.headers.items():
-        if header.lower() not in ('content-type', 'content-length'):
-            proxy_response[header] = value
 
     return proxy_response
 
