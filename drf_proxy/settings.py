@@ -23,7 +23,7 @@ FASTAPI_URL = f'http://{os.getenv('FASTAPI_HOST')}:{os.getenv("FASTAPI_PORT")}'
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['host.docker.internal', '127.0.0.1']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -36,9 +36,11 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'adrf',
     'proxy_app',
+    'django_prometheus',
 ]
 
 MIDDLEWARE = [
+    'django_prometheus.middleware.PrometheusBeforeMiddleware',
     'proxy_app.middleware.RequestDeltaTimeMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -47,6 +49,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_prometheus.middleware.PrometheusAfterMiddleware',
 ]
 
 ROOT_URLCONF = 'drf_proxy.urls'
@@ -86,7 +89,7 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=20),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 }
 
@@ -108,6 +111,22 @@ LOGGING = {
         },
     },
 }
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/1',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        },
+        'KEY_PREFIX': 'proxy_cache',
+    }
+}
+
+REDIS_HEALTH = True
+REDIS_HEALTH_LAST_CHECK = 0
+REDIS_HEALTH_CHECK_INTERVAL = 15
+CACHE_TTL = 600
 
 AUTH_PASSWORD_VALIDATORS = [
     {
