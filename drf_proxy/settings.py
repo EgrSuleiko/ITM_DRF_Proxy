@@ -21,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("SECRET_KEY")
 FASTAPI_URL = f'http://{os.getenv('FASTAPI_HOST')}:{os.getenv("FASTAPI_PORT")}'
 
-DEBUG = True
+DEBUG = os.getenv("DEBUG", True)
 
 ALLOWED_HOSTS = ['host.docker.internal', '127.0.0.1']
 
@@ -41,7 +41,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django_prometheus.middleware.PrometheusBeforeMiddleware',
-    'proxy_app.middleware.RequestDeltaTimeMiddleware',
+    'proxy_app.middleware.LoggingRequestMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -73,12 +73,12 @@ WSGI_APPLICATION = 'drf_proxy.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'db_drf_proxy',
-        'USER': 'postgres',
-        'PASSWORD': 'postgres',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'ENGINE': os.getenv('DB_ENGINE'),
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'),
+        'PORT': os.getenv('DB_PORT'),
     }
 }
 
@@ -101,15 +101,27 @@ LOGGING = {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': 'proxy_app.log',
+            'formatter': 'simple',
         },
+        'stream':
+            {
+                'level': 'INFO',
+                'class': 'logging.StreamHandler',
+                'formatter': 'simple',
+            },
     },
     'loggers': {
         'proxy_app': {
-            'handlers': ['file'],
+            'handlers': ['file', 'stream'],
             'level': 'DEBUG',
             'propagate': True,
         },
     },
+    'formatters': {
+        'simple': {
+            'format': '%(levelname)s %(asctime)s %(name)s.%(funcName)s:%(lineno)s - %(message)s \n',
+        }
+    }
 }
 
 CACHES = {
@@ -123,8 +135,6 @@ CACHES = {
     }
 }
 
-REDIS_HEALTH = True
-REDIS_HEALTH_LAST_CHECK = 0
 REDIS_HEALTH_CHECK_INTERVAL = 15
 CACHE_TTL = 600
 
